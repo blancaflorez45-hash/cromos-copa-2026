@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Control de cromos Copa 2026</title>
+<style>
+:root{
+  --purple:#21113f; --light:#f5f2fb; --line:#d9d0e8;
+  --missing:#ffe1e1; --missing-border:#e35b5b;
+  --owned:#dff5e5; --owned-border:#45a963;
+  --dup:#ffe9c7; --dup-border:#e79a25;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f2f2f2;color:#222}
+header{background:var(--purple);color:white;padding:18px 14px;position:sticky;top:0;z-index:10;box-shadow:0 2px 8px #0003}
+h1{margin:0 0 5px;font-size:22px}
+.sub{font-size:13px;opacity:.9}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}
+button,select,input{font:inherit}
+.toolbar button,.toolbar select,.toolbar input{border:0;border-radius:8px;padding:9px 11px}
+.toolbar button{cursor:pointer;background:white;color:#21113f;font-weight:bold}
+.toolbar input{min-width:190px}
+.summary{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.badge{padding:6px 9px;border-radius:999px;font-size:12px;font-weight:bold;background:white;color:#222}
+main{max-width:1250px;margin:15px auto;padding:0 10px}
+.group{background:white;border-radius:12px;margin:14px 0;overflow:hidden;box-shadow:0 1px 5px #0001}
+.group-title{background:var(--purple);color:#fff;padding:10px 12px;font-size:16px;font-weight:bold}
+.team{border-bottom:1px solid #eee;padding:10px 12px}
+.team:last-child{border-bottom:0}
+.team-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:7px}
+.team-name{font-weight:bold;font-size:14px}
+.team-stats{font-size:11px;color:#666;white-space:nowrap}
+.stickers{display:grid;grid-template-columns:repeat(20,minmax(30px,1fr));gap:3px}
+.sticker{border:1px solid var(--line);background:#fff;border-radius:4px;min-height:30px;cursor:pointer;font-size:10px;font-weight:bold;position:relative;text-align:center;padding:4px 2px}
+.sticker:hover{transform:translateY(-1px);box-shadow:0 1px 4px #0002}
+.sticker.missing{background:var(--missing);border-color:var(--missing-border);color:#a40000}
+.sticker.owned{background:var(--owned);border-color:var(--owned-border);color:#116c2c}
+.sticker.dup{background:var(--dup);border-color:var(--dup-border);color:#8a5000}
+.sticker .count{display:flex;justify-content:center;align-items:center;gap:3px;font-size:8px;font-weight:normal;margin-top:2px}
+.sticker .count button{border:0;border-radius:3px;padding:1px 4px;cursor:pointer;font-size:10px;font-weight:bold;background:#ffffffaa}
+.help{background:#fff;padding:12px;border-radius:10px;margin:15px 0;font-size:13px;line-height:1.45}
+.legend{display:flex;gap:8px;flex-wrap:wrap;margin-top:7px}
+.legend span{padding:5px 8px;border-radius:6px;font-size:11px;font-weight:bold}
+.l-m{background:var(--missing)} .l-o{background:var(--owned)} .l-d{background:var(--dup)}
+#empty{display:none;text-align:center;background:white;padding:30px;border-radius:10px}
+.trade-panel{background:white;border-radius:12px;margin:15px 0;padding:14px;box-shadow:0 1px 5px #0001}
+.trade-cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.trade-box{border:1px solid var(--line);border-radius:9px;padding:10px}
+.trade-box h3{margin:0 0 8px;font-size:15px}
+.trade-list{max-height:280px;overflow:auto;font-size:12px;line-height:1.6}
+.trade-item{display:flex;justify-content:space-between;border-bottom:1px solid #eee;padding:4px 0}
+.trade-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+@media(max-width:650px){.trade-cols{grid-template-columns:1fr}}
+@media(max-width:800px){
+  .stickers{grid-template-columns:repeat(10,1fr)}
+}
+@media(max-width:430px){
+  .stickers{grid-template-columns:repeat(5,1fr)}
+  .sticker{min-height:38px;font-size:11px}
+  h1{font-size:18px}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>FIGURINHAS COPA 2026 — Control de cromos</h1>
+  <div class="sub">Toca un cromo para cambiar su estado. Los datos se guardan automáticamente en este dispositivo.</div>
+  <div class="toolbar">
+    <input id="search" placeholder="Buscar equipo o número…">
+    <select id="filter">
+      <option value="all">Mostrar todos</option>
+      <option value="missing">Solo faltan</option>
+      <option value="owned">Solo tengo</option>
+      <option value="dup">Solo repetidos</option>
+    </select>
+    <button onclick="setAll('missing')">Marcar todos como faltan</button>
+    <button onclick="setAll('missing')">Restablecer: todos faltan</button>
+    <button onclick="showTrade()">🔄 Quiero cambiar</button>
+    <button onclick="shareCollection()">📲 Compartir por WhatsApp</button>
+    <button onclick="openImport()">📥 Cargar colección</button>
+    <button onclick="resetEmptyCollection()">🗑️ Empezar de cero</button>
+    <button onclick="exportData()">Guardar copia</button>
+    <button onclick="document.getElementById('file').click()">Cargar copia</button>
+    <input id="file" type="file" accept=".json" style="display:none" onchange="importData(event)">
+  </div>
+  <div class="summary" id="summary"></div>
+</header>
+
+<main>
+  <div class="help">
+    <b>Cómo usarlo:</b> cada clic cambia <b>Falta → Tengo → Repetido → Sin marcar</b>.
+    Cuando un cromo está como <b>Repetido</b>, usa los botones <b>− / +</b> para indicar cuántos tienes repetidos.
+    <div class="legend">
+      <span class="l-m">ROJO = FALTA</span>
+      <span class="l-o">VERDE = TENGO</span>
+      <span class="l-d">NARANJA = REPETIDO</span>
+    <span class="l-m">ROJO = TE FALTA</span>
+    </div>
+  </div>
+  <div id="tradePanel" class="trade-panel" style="display:none">
+    <b>🔄 Intercambio de cromos</b>
+    <div style="font-size:12px;margin:5px 0 10px">Aquí aparecen automáticamente tus repetidos para ofrecer y los cromos que te faltan para buscar.</div>
+    <div class="trade-cols">
+      <div class="trade-box">
+        <h3>🟠 Mis repetidos — para cambiar</h3>
+        <div id="dupList" class="trade-list"></div>
+      </div>
+      <div class="trade-box">
+        <h3>🔴 Me faltan — para buscar</h3>
+        <div id="missingList" class="trade-list"></div>
+      </div>
+    </div>
+    <div class="trade-actions">
+      <button onclick="copyTradeText()">📋 Copiar lista de intercambio</button>
+      <button onclick="hideTrade()">Cerrar</button>
+    </div>
+  </div>
+  
+<div id="importPanel" class="trade-panel" style="display:none">
+  <b>📥 Cargar colección</b>
+  <div style="font-size:12px;margin:6px 0">Puedes pegar tu lista de cromos. Los indicados como tuyos pasarán a 🟢 TENGO y todos los demás quedarán 🔴 FALTAN.</div>
+  <textarea id="importText" style="width:100%;min-height:180px;box-sizing:border-box;border:1px solid var(--line);border-radius:8px;padding:10px" placeholder="Ejemplo:
+10 RSA = 12
+12 KOR = 9-14
+14 CZE = 6
+...
+COCA COLA = C3-C6"></textarea>
+  <div class="trade-actions">
+    <button onclick="importCollectionText()">✅ Cargar lista</button>
+    <button onclick="closeImport()">Cerrar</button>
+  </div>
+</div>
+
+<div id="groups"></div>
+  <div id="empty">No hay resultados con ese filtro.</div>
+</main>
+
+<script>
+const teams = {
+"A":["México","Sudáfrica","Corea del Sur","República Checa"],
+"B":["Canadá","Bosnia y Herzegovina","Catar","Suiza"],
+"C":["Brasil","Marruecos","Haití","Escocia"],
+"D":["Estados Unidos","Paraguay","Australia","Turquía"],
+"E":["Alemania","Curazao","Costa de Marfil","Ecuador"],
+"F":["Países Bajos","Japón","Suecia","Túnez"],
+"G":["Bélgica","Egipto","Irán","Nueva Zelanda"],
+"H":["España","Cabo Verde","Arabia Saudita","Uruguay"],
+"I":["Francia","Senegal","Irak","Noruega"],
+"J":["Argentina","Argelia","Austria","Jordania"],
+"K":["Portugal","República Democrática del Congo","Uzbekistán","Colombia"],
+"L":["Inglaterra","Croacia","Ghana","Panamá"]
+};
+
+
+// Cromos que has indicado que ya tienes.
+const initialOwned = {
+  "A-0":[/* MEX */],
+  "A-1":[12], "A-2":[9,14], "A-3":[6],
+  "B-0":[6], "B-1":[3,6,13,17], "B-2":[2,5,12], "B-3":[],
+  "C-0":[6], "C-1":[5,16], "C-2":[14], "C-3":[2,3,10,11,17],
+  "D-0":[], "D-1":[6,15], "D-2":[11], "D-3":[4,5,10,18],
+  "E-0":[14], "E-1":[8,9,15,16], "E-2":[4,16], "E-3":[6,15,20],
+  "F-0":[13,20], "F-1":[12,19], "F-2":[3,8,13,16,20], "F-3":[12,17],
+  "G-0":[11,19], "G-1":[6,9,11,14], "G-2":[], "G-3":[13],
+  "H-0":[5], "H-1":[12], "H-2":[3,6,11], "H-3":[14,18],
+  "I-0":[13,17], "I-1":[2,15], "I-2":[], "I-3":[9,17],
+  "J-0":[6], "J-1":[1,16], "J-2":[1,7], "J-3":[3,17],
+  "K-0":[7], "K-1":[9,16,17,20], "K-2":[14,16], "K-3":[5,6],
+  "L-0":[6,14,15], "L-1":[20], "L-2":[], "L-3":[12]
+};
+const specialOwned = {
+  "FWC-1":[2],
+  "FWC-2":[],
+  "FWC-106":[],
+  "FWC-108":[15],
+  "COCA-COLA":["C3","C4","C5","C6"]
+};
+
+const key=(g,t,n)=>`${g}-${t}-${n}`;
+
+let data=JSON.parse(localStorage.getItem("copa2026_cromos_EMPTY_2026_V2")||"{}");
+
+// Estado inicial de esta versión: cualquier cromo que no esté marcado como
+// conseguido o repetido se muestra como FALTA (rojo).
+for(const g in teams) for(let t=0;t<4;t++) for(let n=1;n<=20;n++){
+  const k=key(g,t,n);
+  if(!data[k] || data[k].s==="none") data[k]={s:"missing",d:1};
+}
+for(const page of ["1","2","106","108"]) for(let n=1;n<=20;n++){
+  const k=`FWC-${page}-${n}`;
+  if(!data[k] || data[k].s==="none") data[k]={s:"missing",d:1};
+}
+for(let n=1;n<=6;n++){
+  const k=`COCA-COLA-C${n}`;
+  if(!data[k] || data[k].s==="none") data[k]={s:"missing",d:1};
+}
+localStorage.setItem("copa2026_cromos_EMPTY_2026_V2",JSON.stringify(data));
+
+if(Object.keys(data).length===0){
+  // Al cargar tu lista, TODO lo que no aparece como "tengo" queda automáticamente como "falta".
+  for(const g in teams){
+    for(let t=0;t<4;t++){
+      for(let n=1;n<=20;n++) data[key(g,t,n)]={s:"missing",d:1};
+    }
+  }
+  // Los cromos que has indicado que tienes pasan a verde.
+  for(const k in initialOwned){
+    for(const n of initialOwned[k]) data[k+"-"+n]={s:"owned",d:1};
+  }
+
+  // FWC y Coca-Cola: lo no indicado queda como faltante.
+  for(const page of ["1","2","106","108"]){
+    for(let n=1;n<=20;n++) data["FWC-"+page+"-"+n]={s:"missing",d:1};
+  }
+  for(let n=1;n<=6;n++) data["COCA-COLA-C"+n]={s:"missing",d:1};
+
+  for(const k in specialOwned){
+    for(const n of specialOwned[k]){
+      // specialOwned usa claves FWC-1, FWC-2, etc.
+      if(k.startsWith("FWC-")){
+        const page=k.split("-")[1];
+        data["FWC-"+page+"-"+n]={s:"owned",d:1};
+      } else {
+        data[k+"-"+n]={s:"owned",d:1};
+      }
+    }
+  }
+  localStorage.setItem("copa2026_cromos_EMPTY_2026_V2",JSON.stringify(data));
+}
+
+function get(g,t,n){ return data[key(g,t,n)] || {s:"none",d:1}; }
+function save(){ localStorage.setItem("copa2026_cromos_EMPTY_2026_V2",JSON.stringify(data)); }
+
+function cycle(g,t,n){
+  const k=key(g,t,n), x=get(g,t,n);
+  if(x.s==="missing") x.s="owned";
+  else if(x.s==="owned"){x.s="dup"; x.d=Math.max(1,x.d||1);}
+  else if(x.s==="dup") x.s="missing";
+  else x.s="owned";
+  data[k]=x; save(); 
+// PLANTILLA VACÍA V2: esta copia empieza siempre sin los datos anteriores.
+if(localStorage.getItem("copa2026_empty_template_v2")!=="1"){
+  data={};
+  for(const g in teams) for(let t=0;t<4;t++) for(let n=1;n<=20;n++)
+    data[key(g,t,n)]={s:"missing",d:1};
+  for(const page of ["1","2","106","108"]) for(let n=1;n<=20;n++)
+    data[`FWC-${page}-${n}`]={s:"missing",d:1};
+  for(let n=1;n<=6;n++) data[`COCA-COLA-C${n}`]={s:"missing",d:1};
+  localStorage.setItem("copa2026_empty_template_v2","1");
+  save();
+}
+
+render();
+}
+
+function addDup(ev,g,t,n,delta){
+  ev.stopPropagation();
+  const k=key(g,t,n), x=get(g,t,n);
+  if(x.s!=="dup") return;
+  x.d=Math.max(1,(x.d||1)+delta);
+  data[k]=x; save(); render();
+}
+
+function render(){
+  const q=document.getElementById("search").value.toLowerCase().trim();
+  const f=document.getElementById("filter").value;
+  const root=document.getElementById("groups"); root.innerHTML="";
+  let visible=0;
+
+  // Apartado de FWC y Coca-Cola anotados en tu lista.
+  const specialBox=document.createElement("section"); specialBox.className="group";
+  specialBox.innerHTML='<div class="group-title">CROMOS ESPECIALES — FWC / COCA-COLA</div>';
+  const specialRows=[
+    ["FWC — página 1","FWC","1",20],
+    ["FWC — página 2","FWC","2",20],
+    ["FWC — página 106","FWC","106",20],
+    ["FWC — página 108","FWC","108",20],
+    ["COCA-COLA","COCA-COLA","",6]
+  ];
+  let specialHas=false;
+  for(const [label,prefix,page,total] of specialRows){
+    const row=document.createElement("div"); row.className="team";
+    let cards="", any=false;
+    const vals=specialOwned[prefix]||[];
+    for(let i=1;i<=total;i++){
+      const code=prefix==="COCA-COLA" ? prefix+"-C"+i : prefix+"-"+page+"-"+i;
+      const x=data[code]||{s:"none",d:1};
+      const qmatch=!q || label.toLowerCase().includes(q) || String(i).includes(q);
+      const fmatch=f==="all" || x.s===f;
+      if(qmatch && fmatch){any=true; visible++}
+      const txt=prefix==="COCA-COLA" ? "C"+i : i;
+      cards+=`<div class="sticker ${x.s}" data-show="${qmatch&&fmatch}" onclick="specialCycle('${prefix}','${page}',${i})">${txt}</div>`;
+    }
+    if(any){
+      row.innerHTML=`<div class="team-head"><div class="team-name">${label}</div><div class="team-stats"></div></div><div class="stickers">${cards}</div>`;
+      row.querySelectorAll('.sticker').forEach(b=>{if(b.dataset.show!=="true")b.style.display="none"});
+      specialBox.appendChild(row); specialHas=true;
+    }
+  }
+  if(specialHas) root.appendChild(specialBox);
+
+  for(const [g,names] of Object.entries(teams)){
+    const box=document.createElement("section"); box.className="group";
+    const title=document.createElement("div"); title.className="group-title"; title.textContent=`GRUPO ${g}`;
+    box.appendChild(title);
+    let groupHas=false;
+    names.forEach((team,t)=>{
+      const teamMatches=!q || team.toLowerCase().includes(q) || String(t+1).includes(q) || g.toLowerCase()===q;
+      const row=document.createElement("div"); row.className="team";
+      row.dataset.team=team;
+      let any=false;
+      let cards="";
+      for(let n=1;n<=20;n++){
+        const x=get(g,t,n);
+        const matchesFilter=f==="all" || x.s===f;
+        if(teamMatches && matchesFilter){any=true; visible++}
+        const label=x.s==="dup"
+          ? `${n}<span class="count">x${x.d||1}<button onclick="addDup(event,'${g}',${t},${n},-1)">−</button><button onclick="addDup(event,'${g}',${t},${n},1)">+</button></span>`
+          : n;
+        cards+=`<div class="sticker ${x.s}" data-show="${teamMatches&&matchesFilter}" onclick="cycle('${g}',${t},${n})">${label}</div>`;
+      }
+      if(any){
+        row.innerHTML=`<div class="team-head"><div class="team-name">${team}</div><div class="team-stats" id="st-${g}-${t}"></div></div><div class="stickers">${cards}</div>`;
+        row.querySelectorAll('.sticker').forEach(b=>{if(b.dataset.show!=="true")b.style.display="none"});
+        box.appendChild(row); groupHas=true;
+        updateTeamStats(row,g,t);
+      }
+    });
+    if(groupHas) root.appendChild(box);
+  }
+  document.getElementById("empty").style.display=visible?"none":"block";
+  updateSummary();
+}
+
+function specialCycle(prefix,page,n){
+  const code=prefix==="COCA-COLA" ? prefix+"-C"+n : prefix+"-"+page+"-"+n;
+  const x=data[code]||{s:"none",d:1};
+  if(x.s==="none") x.s="missing";
+  else if(x.s==="missing") x.s="owned";
+  else if(x.s==="owned") x.s="dup";
+  else x.s="none";
+  data[code]=x; save(); render();
+}
+
+function updateTeamStats(row,g,t){
+  let have=0, missing=0, dup=0, totalDup=0;
+  for(let n=1;n<=20;n++){
+    const x=get(g,t,n);
+    if(x.s==="owned")have++;
+    if(x.s==="missing")missing++;
+    if(x.s==="dup"){dup++;totalDup+=x.d||1}
+  }
+  row.querySelector(".team-stats").textContent=`Tengo: ${have} · Faltan: ${missing} · Repetidos: ${totalDup}`;
+}
+
+function updateSummary(){
+  let have=0, missing=0, dupStickers=0, dupTotal=0;
+  for(const g in teams) for(let t=0;t<4;t++) for(let n=1;n<=20;n++){
+    const x=get(g,t,n);
+    if(x.s==="owned")have++;
+    if(x.s==="missing")missing++;
+    if(x.s==="dup"){dupStickers++;dupTotal+=x.d||1}
+  }
+  for(const code in data){
+    if(code.includes("-") && (code.startsWith("FWC-") || code.startsWith("COCA-COLA-"))){
+      const x=data[code];
+      if(x.s==="owned")have++;
+      if(x.s==="missing")missing++;
+      if(x.s==="dup"){dupStickers++;dupTotal+=x.d||1}
+    }
+  }
+  document.getElementById("summary").innerHTML=
+    `<span class="badge">Total equipos: 960</span>
+     <span class="badge">Tengo: ${have}</span>
+     <span class="badge">Faltan: ${missing}</span>
+     <span class="badge">Repetidos: ${dupTotal}</span>
+     <span class="badge">Marcados: ${have+missing+dupStickers}</span>`;
+}
+
+function setAll(status){
+  if(!confirm("¿Marcar todos los cromos como faltantes? Esto reiniciará los estados actuales."))return;
+  for(const g in teams) for(let t=0;t<4;t++) for(let n=1;n<=20;n++)
+    data[key(g,t,n)]={s:status,d:1};
+  save(); render();
+}
+
+
+function allStickerLabels(){
+  const out=[];
+  for(const [g,names] of Object.entries(teams)){
+    names.forEach((team,t)=>{
+      for(let n=1;n<=20;n++){
+        const x=get(g,t,n);
+        out.push({code:`${g}-${n}`,label:`${g} · ${team} · ${n}`,state:x.s,count:x.d||1});
+      }
+    });
+  }
+  // Especiales
+  for(const page of ["1","2","106","108"]){
+    for(let n=1;n<=20;n++){
+      const code=`FWC-${page}-${n}`, x=data[code]||{s:"none",d:1};
+      out.push({code,label:`FWC · pág. ${page} · ${n}`,state:x.s,count:x.d||1});
+    }
+  }
+  for(let n=1;n<=6;n++){
+    const code=`COCA-COLA-C${n}`, x=data[code]||{s:"none",d:1};
+    out.push({code,label:`COCA-COLA · C${n}`,state:x.s,count:x.d||1});
+  }
+  return out;
+}
+
+function showTrade(){
+  const panel=document.getElementById("tradePanel");
+  panel.style.display="block";
+  const items=allStickerLabels();
+  const dup=items.filter(x=>x.state==="dup");
+  const missing=items.filter(x=>x.state==="missing");
+  document.getElementById("dupList").innerHTML=dup.length
+    ? dup.map(x=>`<div class="trade-item"><span>${x.label}</span><b>x${x.count}</b></div>`).join("")
+    : "<i>No tienes repetidos marcados.</i>";
+  document.getElementById("missingList").innerHTML=missing.length
+    ? missing.map(x=>`<div class="trade-item"><span>${x.label}</span></div>`).join("")
+    : "<i>No tienes cromos marcados como faltantes.</i>";
+  panel.scrollIntoView({behavior:"smooth",block:"start"});
+}
+
+function hideTrade(){
+  document.getElementById("tradePanel").style.display="none";
+}
+
+function copyTradeText(){
+  const items=allStickerLabels();
+  const dup=items.filter(x=>x.state==="dup");
+  const missing=items.filter(x=>x.state==="missing");
+  let text="MIS CROMOS PARA INTERCAMBIO\n\nREPETIDOS:\n";
+  text += dup.length ? dup.map(x=>`${x.label} (x${x.count})`).join("\n") : "Ninguno";
+  text += "\n\nME FALTAN:\n";
+  text += missing.length ? missing.map(x=>x.label).join("\n") : "Ninguno";
+  navigator.clipboard.writeText(text).then(()=>alert("Lista copiada. Ya puedes pegarla en WhatsApp."));
+}
+
+async function shareCollection(){
+  const items=allStickerLabels();
+  const dup=items.filter(x=>x.state==="dup");
+  const missing=items.filter(x=>x.state==="missing");
+
+  let text="🏆 MI COLECCIÓN DE CROMOS COPA 2026\n\n";
+  text+="🟠 REPETIDOS PARA CAMBIAR:\n";
+  text+=dup.length ? dup.map(x=>`${x.label} (x${x.count})`).join("\n") : "Ninguno";
+  text+="\n\n🔴 CROMOS QUE ME FALTAN:\n";
+  text+=missing.length ? missing.map(x=>x.label).join("\n") : "Ninguno";
+  text+="\n\nEnviado desde mi control de cromos.";
+
+  // Android/Chrome: compartir texto directamente, ideal para WhatsApp.
+  if(navigator.share){
+    try{
+      await navigator.share({
+        title:"Mi colección de cromos Copa 2026",
+        text:text
+      });
+      return;
+    }catch(e){}
+  }
+
+  // Fallback: copia el texto al portapapeles para pegarlo en WhatsApp.
+  try{
+    await navigator.clipboard.writeText(text);
+    alert("La lista se ha copiado. Abre WhatsApp, entra en el chat y pulsa Pegar.");
+  }catch(e){
+    prompt("Copia esta lista y pégala en WhatsApp:",text);
+  }
+}
+
+function openImport(){
+  document.getElementById("importPanel").style.display="block";
+  document.getElementById("importText").focus();
+}
+function closeImport(){
+  document.getElementById("importPanel").style.display="none";
+}
+function normalizeTeamCode(code){
+  return code.trim().toUpperCase();
+}
+function importCollectionText(){
+  const text=document.getElementById("importText").value;
+  if(!text.trim()){alert("Pega primero tu lista de cromos.");return;}
+
+  // Start with every regular sticker and special sticker as missing.
+  for(const g in teams) for(let t=0;t<4;t++) for(let n=1;n<=20;n++)
+    data[key(g,t,n)]={s:"missing",d:1};
+  for(const page of ["1","2","106","108"]) for(let n=1;n<=20;n++)
+    data[`FWC-${page}-${n}`]={s:"missing",d:1};
+  for(let n=1;n<=6;n++) data[`COCA-COLA-C${n}`]={s:"missing",d:1};
+
+  const lines=text.split(/\r?\n/);
+  let loaded=0, unknown=[];
+
+  // Regular team lines: "10 RSA = 12" or "12 KOR = 9-14"
+  for(const raw of lines){
+    const line=raw.trim();
+    if(!line || line.startsWith("#")) continue;
+
+    let m=line.match(/^(\d+)\s+([A-Za-z]+)\s*=\s*(.+)$/);
+    if(m){
+      const page=parseInt(m[1],10);
+      const code=normalizeTeamCode(m[2]);
+      const nums=m[3].replace(/[–—]/g,"-").split("-").map(x=>parseInt(x.trim(),10)).filter(Number.isFinite);
+      const group=teams[String(page)];
+      if(group){
+        const ti=group.findIndex(x=>x.toUpperCase()===code);
+        if(ti>=0){
+          nums.forEach(n=>{
+            if(n>=1 && n<=20){ data[key(String(page),ti,n)]={s:"owned",d:1}; loaded++; }
+          });
+          continue;
+        }
+      }
+    }
+
+    // Coca-Cola: C3-C6
+    m=line.match(/^COCA\s*COLA\s*=\s*(.+)$/i);
+    if(m){
+      const parts=m[1].toUpperCase().replace(/\s/g,"").split("-");
+      const nums=[];
+      for(const part of parts){
+        const mm=part.match(/^C(\d+)$/);
+        if(mm) nums.push(parseInt(mm[1],10));
+      }
+      if(parts.length===2 && /^C\d+$/.test(parts[0]) && /^C\d+$/.test(parts[1])){
+        const a=parseInt(parts[0].slice(1)), b=parseInt(parts[1].slice(1));
+        nums.length=0; for(let n=a;n<=b;n++) nums.push(n);
+      }
+      nums.forEach(n=>{if(n>=1&&n<=6){data[`COCA-COLA-C${n}`]={s:"owned",d:1};loaded++;}});
+      continue;
+    }
+
+    // FWC lines: "FWC 1 = 2" / "FWC 108 = 15"
+    m=line.match(/^FWC\s+(\d+)\s*=\s*(.+)$/i);
+    if(m){
+      const page=m[1], nums=m[2].replace(/[–—]/g,"-").split("-").map(x=>parseInt(x.trim(),10)).filter(Number.isFinite);
+      if(["1","2","106","108"].includes(page)){
+        nums.forEach(n=>{if(n>=1&&n<=20){data[`FWC-${page}-${n}`]={s:"owned",d:1};loaded++;}});
+        continue;
+      }
+    }
+  }
+
+  save(); render(); closeImport();
+  alert(`Colección cargada: ${loaded} cromos marcados como TENGO. Todos los demás quedan como FALTAN.`);
+}
+
+function resetEmptyCollection(){
+  if(!confirm("¿Borrar esta colección y dejar TODOS los cromos como FALTAN?")) return;
+  data={};
+  for(const g in teams) for(let t=0;t<4;t++) for(let n=1;n<=20;n++)
+    data[key(g,t,n)]={s:"missing",d:1};
+  for(const page of ["1","2","106","108"]) for(let n=1;n<=20;n++)
+    data[`FWC-${page}-${n}`]={s:"missing",d:1};
+  for(let n=1;n<=6;n++) data[`COCA-COLA-C${n}`]={s:"missing",d:1};
+  save(); render();
+}
+
+function exportData(){
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+  a.download="mis-cromos-copa-2026.json"; a.click(); URL.revokeObjectURL(a.href);
+}
+function importData(ev){
+  const file=ev.target.files[0]; if(!file)return;
+  const r=new FileReader();
+  r.onload=()=>{try{data=JSON.parse(r.result)||{};save();render();}catch(e){alert("El archivo no es válido.");}};
+  r.readAsText(file);
+}
+document.getElementById("search").addEventListener("input",render);
+document.getElementById("filter").addEventListener("change",render);
+render();
+</script>
+</body>
+</html>
