@@ -48,7 +48,6 @@
         .top-bar input { flex: 2; }
         .top-bar select { flex: 1; }
 
-        /* Menú desplegable para compactar la pantalla */
         details {
             background: rgba(255, 255, 255, 0.1);
             border-radius: 8px;
@@ -158,7 +157,6 @@
         </select>
     </div>
 
-    <!-- Menú desplegable compacto con funciones operativas -->
     <details>
         <summary>⚙️ Opciones y Herramientas</summary>
         <div class="actions-grid">
@@ -167,7 +165,11 @@
             <button onclick="copiarIntercambio()">🔄 Quiero cambiar</button>
             <button onclick="compartirWhatsApp()">📲 Compartir WhatsApp</button>
             <button onclick="guardarCopia()">💾 Guardar copia</button>
-            <button onclick="cargarCopia()">📂 Cargar copia</button>
+            
+            <!-- Botón para seleccionar archivo del móvil -->
+            <button onclick="document.getElementById('fileInput').click()">📂 Cargar copia</button>
+            <input type="file" id="fileInput" accept=".json" style="display: none;" onchange="cargarFichero(event)">
+            
             <button onclick="empezarDeCero()" style="background:#ff4d4d; color:white;">🗑️ Empezar de cero</button>
         </div>
     </details>
@@ -190,7 +192,7 @@
             if (Object.keys(coleccion).length === 0) {
                 PAISES.forEach(p => {
                     for (let i = 1; i <= CROMOS_POR_PAIS; i++) {
-                        coleccion[`${p}-${i}`] = 1; // 1 = Falta
+                        coleccion[`${p}-${i}`] = 1;
                     }
                 });
                 guardar();
@@ -236,7 +238,7 @@
 
         function cambiarEstado(id) {
             let actual = coleccion[id] || 0;
-            coleccion[id] = (actual + 1) % 4; // Ciclo: 0 -> 1 (Falta) -> 2 (Tengo) -> 3 (Repe) -> 0
+            coleccion[id] = (actual + 1) % 4;
             guardar();
             render();
         }
@@ -289,15 +291,24 @@
             downloadAnchor.remove();
         }
 
-        function cargarCopia() {
-            let json = prompt("Pega aquí el contenido de tu copia de seguridad:");
-            if (json) {
+        // Nueva función para leer directamente el archivo descargado
+        function cargarFichero(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
                 try {
-                    coleccion = JSON.parse(json);
+                    const contenido = JSON.parse(e.target.result);
+                    coleccion = contenido;
                     guardar();
                     render();
-                } catch(e) { alert('Formato no válido'); }
-            }
+                    alert('¡Colección cargada con éxito desde el fichero!');
+                } catch (err) {
+                    alert('Error: El fichero seleccionado no es válido.');
+                }
+            };
+            reader.readAsText(file);
         }
 
         function empezarDeCero() {
