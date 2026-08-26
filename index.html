@@ -166,16 +166,15 @@
             <button onclick="compartirWhatsApp()">📲 Compartir WhatsApp</button>
             <button onclick="guardarCopia()">💾 Guardar copia</button>
             
-            <!-- Botón para seleccionar archivo del móvil -->
             <button onclick="document.getElementById('fileInput').click()">📂 Cargar copia</button>
-            <input type="file" id="fileInput" accept=".json" style="display: none;" onchange="cargarFichero(event)">
+            <input type="file" id="fileInput" accept=".json,application/json" style="display: none;" onchange="cargarFichero(event)">
             
             <button onclick="empezarDeCero()" style="background:#ff4d4d; color:white;">🗑️ Empezar de cero</button>
         </div>
     </details>
 
     <div class="stats-bar">
-        <span>Equipos: <b id="stat-equipos">32</b></span>
+        <span>Total Cromos: <b id="stat-total">0</b></span>
         <span>Tengo: <b id="stat-tengo">0</b></span>
         <span>Faltan: <b id="stat-faltan">0</b></span>
         <span>Repes: <b id="stat-repes">0</b></span>
@@ -252,12 +251,14 @@
         }
 
         function actualizarStats() {
+            let total = Object.keys(coleccion).length;
             let tengo = 0, faltan = 0, repes = 0;
             Object.values(coleccion).forEach(v => {
                 if (v === 1) faltan++;
                 if (v >= 2) tengo++;
                 if (v > 2) repes += (v - 2);
             });
+            document.getElementById('stat-total').innerText = total;
             document.getElementById('stat-tengo').innerText = tengo;
             document.getElementById('stat-faltan').innerText = faltan;
             document.getElementById('stat-repes').innerText = repes;
@@ -291,7 +292,6 @@
             downloadAnchor.remove();
         }
 
-        // Nueva función para leer directamente el archivo descargado
         function cargarFichero(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -300,13 +300,18 @@
             reader.onload = function(e) {
                 try {
                     const contenido = JSON.parse(e.target.result);
-                    coleccion = contenido;
-                    guardar();
-                    render();
-                    alert('¡Colección cargada con éxito desde el fichero!');
+                    if (typeof contenido === 'object' && contenido !== null) {
+                        coleccion = contenido;
+                        guardar();
+                        render();
+                        alert('¡Colección cargada con éxito!');
+                    } else {
+                        throw new Error('Formato inválido');
+                    }
                 } catch (err) {
-                    alert('Error: El fichero seleccionado no es válido.');
+                    alert('Error: El archivo no contiene un formato de copia válido.');
                 }
+                event.target.value = ''; // Permite recargar el mismo archivo si se desea
             };
             reader.readAsText(file);
         }
@@ -332,7 +337,9 @@
                     (filtro === 'repetidos' && estado > 2);
                 let cumpleBusqueda = id.includes(busqueda);
 
-                card.style.display = (cumpleFiltro && cumpleBusqueda) ? 'flex' : 'none';
+                if (card) {
+                    card.style.display = (cumpleFiltro && cumpleBusqueda) ? 'flex' : 'none';
+                }
             });
         }
 
