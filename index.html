@@ -3,34 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control de Cromos Copa 2026</title>
+    <title>Control de cromos Copa 2026</title>
     <style>
         :root {
-            --bg-color: #21113f;
+            --bg-purple: #21113f;
             --card-bg: #ffffff;
-            --primary: #5f259f;
-            --text-color: #ffffff;
+            --text-dark: #222222;
+            --primary-btn: #ffffff;
+            --missing-bg: #ffe1e1;
+            --missing-border: #a40000;
+            --owned-bg: #dff5e5;
+            --owned-border: #116c2c;
+            --dup-bg: #ffe9c7;
+            --dup-border: #e79a25;
         }
 
         body {
             font-family: system-ui, -apple-system, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
+            background-color: var(--bg-purple);
+            color: #ffffff;
             margin: 0;
-            padding: 8px;
+            padding: 10px;
         }
 
         h1 {
             font-size: 16px;
-            margin: 0 0 8px 0;
+            margin: 0 0 10px 0;
             text-align: center;
         }
 
-        /* Buscador compacto en una sola fila */
         .top-bar {
             display: flex;
             gap: 6px;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
         }
 
         .top-bar input, .top-bar select {
@@ -43,58 +48,66 @@
         .top-bar input { flex: 2; }
         .top-bar select { flex: 1; }
 
-        /* Menú desplegable para ocultar botones */
-        </details>{
+        /* Menú desplegable para compactar la pantalla */
+        details {
             background: rgba(255, 255, 255, 0.1);
-            border-radius: 6px;
-            padding: 6px 10px;
-            margin-bottom: 8px;
-            font-size: 12px;
+            border-radius: 8px;
+            padding: 8px;
+            margin-bottom: 10px;
         }
 
-        </summary> {
+        summary {
             cursor: pointer;
             font-weight: bold;
+            font-size: 13px;
+            text-align: center;
         }
 
-        .grid-botones {
+        .actions-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
             gap: 6px;
             margin-top: 8px;
         }
 
-        .grid-botones button {
-            background: #ffffff;
-            color: #21113f;
+        .actions-grid button {
+            background: var(--primary-btn);
+            color: var(--bg-purple);
             border: none;
-            padding: 8px;
-            border-radius: 4px;
-            font-weight: bold;
-            font-size: 11px;
-        }
-
-        /* Contador compacto */
-        .stats {
-            display: flex;
-            justify-content: space-around;
-            background: rgba(0,0,0,0.2);
-            padding: 6px;
+            padding: 8px 4px;
             border-radius: 6px;
             font-size: 11px;
-            margin-bottom: 10px;
+            font-weight: bold;
+            cursor: pointer;
         }
 
-        /* Cuadrícula de cromos destacada */
-        .grid-cromos {
+        .stats-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            justify-content: space-between;
+            background: rgba(0,0,0,0.25);
+            padding: 6px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            margin-bottom: 12px;
+        }
+
+        .stats-bar span {
+            background: rgba(255,255,255,0.15);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .stickers-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
             gap: 6px;
         }
 
-        .cromo-card {
+        .sticker-card {
             background: var(--card-bg);
-            color: #333;
+            color: var(--text-dark);
             aspect-ratio: 3/4;
             border-radius: 6px;
             display: flex;
@@ -103,7 +116,31 @@
             justify-content: center;
             font-size: 11px;
             font-weight: bold;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            user-select: none;
+            border: 2px solid transparent;
+        }
+
+        .sticker-card.missing { background: var(--missing-bg); border-color: var(--missing-border); color: var(--missing-border); }
+        .sticker-card.owned { background: var(--owned-bg); border-color: var(--owned-border); color: var(--owned-border); }
+        .sticker-card.dup { background: var(--dup-bg); border-color: var(--dup-border); color: var(--dup-border); }
+
+        .dup-controls {
+            display: flex;
+            gap: 4px;
+            margin-top: 2px;
+        }
+
+        .dup-controls button {
+            border: none;
+            background: var(--dup-border);
+            color: white;
+            border-radius: 3px;
+            width: 16px;
+            height: 16px;
+            font-size: 10px;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -111,51 +148,184 @@
 
     <h1>FIGURINHAS COPA 2026</h1>
 
-    <!-- Controles compactos -->
     <div class="top-bar">
-        <input type="text" placeholder="Buscar equipo o nº...">
-        <select>
-            <option>Todos</option>
-            <option>Faltan</option>
-            <option>Tengo</option>
-            <option>Repetidos</option>
+        <input type="text" id="searchInput" placeholder="Buscar equipo o nº..." oninput="filtrar()">
+        <select id="filterSelect" onchange="filtrar()">
+            <option value="todos">Mostrar todos</option>
+            <option value="faltan">Faltan</option>
+            <option value="tengo">Tengo</option>
+            <option value="repetidos">Repetidos</option>
         </select>
     </div>
 
-    <!-- Menú Oculto que guarda todos los botones -->
-    </details>
-        </summary>⚙️ Opciones y Copia de Seguridad</summary>
-        <div class="grid-botones">
-            <button>Marcar faltan</button>
-            <button>Restablecer</button>
-            <button>🔄 Quiero cambiar</button>
-            <button>📲 Compartir WhatsApp</button>
-            <button>📥 Cargar colección</button>
-            <button>💾 Guardar copia</button>
-            <button>📂 Cargar copia</button>
-            <button style="background:#ff4d4d; color:white;">🗑️ Empezar de cero</button>
+    <!-- Menú desplegable compacto con funciones operativas -->
+    <details>
+        <summary>⚙️ Opciones y Herramientas</summary>
+        <div class="actions-grid">
+            <button onclick="marcarEstadoTodos(1)">Marcar todos faltan</button>
+            <button onclick="marcarEstadoTodos(0)">Restablecer todo</button>
+            <button onclick="copiarIntercambio()">🔄 Quiero cambiar</button>
+            <button onclick="compartirWhatsApp()">📲 Compartir WhatsApp</button>
+            <button onclick="guardarCopia()">💾 Guardar copia</button>
+            <button onclick="cargarCopia()">📂 Cargar copia</button>
+            <button onclick="empezarDeCero()" style="background:#ff4d4d; color:white;">🗑️ Empezar de cero</button>
         </div>
     </details>
 
-    <!-- Barra de totales -->
-    <div class="stats">
-        <span>Equipos: <b>960</b></span>
-        <span>Tengo: <b>0</b></span>
-        <span>Faltan: <b>1045</b></span>
-        <span>Repes: <b>5</b></span>
+    <div class="stats-bar">
+        <span>Equipos: <b id="stat-equipos">32</b></span>
+        <span>Tengo: <b id="stat-tengo">0</b></span>
+        <span>Faltan: <b id="stat-faltan">0</b></span>
+        <span>Repes: <b id="stat-repes">0</b></span>
     </div>
 
-    <!-- Vista de cromos visible de inmediato -->
-    <div class="grid-cromos">
-        <div class="cromo-card">ESP 1</div>
-        <div class="cromo-card">ESP 2</div>
-        <div class="cromo-card">ESP 3</div>
-        <div class="cromo-card">ARG 1</div>
-        <div class="cromo-card">ARG 2</div>
-        <div class="cromo-card">BRA 1</div>
-        <div class="cromo-card">BRA 2</div>
-        <div class="cromo-card">FRA 1</div>
-    </div>
+    <div class="stickers-grid" id="grid"></div>
 
+    <script>
+        const PAISES = ["ESP", "ARG", "BRA", "FRA", "GER", "ITA"];
+        const CROMOS_POR_PAIS = 10;
+        let coleccion = JSON.parse(localStorage.getItem('cromos_copa_2026')) || {};
+
+        function init() {
+            if (Object.keys(coleccion).length === 0) {
+                PAISES.forEach(p => {
+                    for (let i = 1; i <= CROMOS_POR_PAIS; i++) {
+                        coleccion[`${p}-${i}`] = 1; // 1 = Falta
+                    }
+                });
+                guardar();
+            }
+            render();
+        }
+
+        function guardar() {
+            localStorage.setItem('cromos_copa_2026', JSON.stringify(coleccion));
+            actualizarStats();
+        }
+
+        function render() {
+            const grid = document.getElementById('grid');
+            grid.innerHTML = '';
+            
+            Object.keys(coleccion).forEach(id => {
+                const estado = coleccion[id];
+                const card = document.createElement('div');
+                card.className = 'sticker-card';
+                card.id = `card-${id}`;
+
+                let textoEstado = '';
+                if (estado === 1) { card.classList.add('missing'); textoEstado = 'FALTA'; }
+                else if (estado === 2) { card.classList.add('owned'); textoEstado = 'TENGO'; }
+                else if (estado > 2) { card.classList.add('dup'); textoEstado = `REPE x${estado - 1}`; }
+
+                card.innerHTML = `<div>${id}</div><div style="font-size:9px">${textoEstado}</div>`;
+
+                if (estado > 2) {
+                    const ctrl = document.createElement('div');
+                    ctrl.className = 'dup-controls';
+                    ctrl.innerHTML = `<button onclick="event.stopPropagation(); modRepe('${id}', -1)">-</button><button onclick="event.stopPropagation(); modRepe('${id}', 1)">+</button>`;
+                    card.appendChild(ctrl);
+                }
+
+                card.onclick = () => cambiarEstado(id);
+                grid.appendChild(card);
+            });
+
+            actualizarStats();
+        }
+
+        function cambiarEstado(id) {
+            let actual = coleccion[id] || 0;
+            coleccion[id] = (actual + 1) % 4; // Ciclo: 0 -> 1 (Falta) -> 2 (Tengo) -> 3 (Repe) -> 0
+            guardar();
+            render();
+        }
+
+        function modRepe(id, delta) {
+            if (coleccion[id] > 2 || delta > 0) {
+                coleccion[id] = Math.max(2, coleccion[id] + delta);
+                guardar();
+                render();
+            }
+        }
+
+        function actualizarStats() {
+            let tengo = 0, faltan = 0, repes = 0;
+            Object.values(coleccion).forEach(v => {
+                if (v === 1) faltan++;
+                if (v >= 2) tengo++;
+                if (v > 2) repes += (v - 2);
+            });
+            document.getElementById('stat-tengo').innerText = tengo;
+            document.getElementById('stat-faltan').innerText = faltan;
+            document.getElementById('stat-repes').innerText = repes;
+        }
+
+        function marcarEstadoTodos(val) {
+            Object.keys(coleccion).forEach(k => coleccion[k] = val);
+            guardar();
+            render();
+        }
+
+        function compartirWhatsApp() {
+            let faltantes = Object.keys(coleccion).filter(k => coleccion[k] === 1).join(', ');
+            let url = `https://api.whatsapp.com/send?text=${encodeURIComponent('¡Hola! Me faltan estos cromos de la Copa 2026: ' + faltantes)}`;
+            window.open(url, '_blank');
+        }
+
+        function copiarIntercambio() {
+            let repes = Object.keys(coleccion).filter(k => coleccion[k] > 2).join(', ');
+            navigator.clipboard.writeText('Tengo repetidos: ' + repes);
+            alert('¡Lista de repetidos copiada al portapapeles!');
+        }
+
+        function guardarCopia() {
+            let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(coleccion));
+            let downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", "copia_cromos_2026.json");
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        function cargarCopia() {
+            let json = prompt("Pega aquí el contenido de tu copia de seguridad:");
+            if (json) {
+                try {
+                    coleccion = JSON.parse(json);
+                    guardar();
+                    render();
+                } catch(e) { alert('Formato no válido'); }
+            }
+        }
+
+        function empezarDeCero() {
+            if (confirm('¿Seguro que quieres borrar toda tu colección?')) {
+                localStorage.removeItem('cromos_copa_2026');
+                coleccion = {};
+                init();
+            }
+        }
+
+        function filtrar() {
+            let busqueda = document.getElementById('searchInput').value.toUpperCase();
+            let filtro = document.getElementById('filterSelect').value;
+
+            Object.keys(coleccion).forEach(id => {
+                let card = document.getElementById(`card-${id}`);
+                let estado = coleccion[id];
+                let cumpleFiltro = (filtro === 'todos') ||
+                    (filtro === 'faltan' && estado === 1) ||
+                    (filtro === 'tengo' && estado >= 2) ||
+                    (filtro === 'repetidos' && estado > 2);
+                let cumpleBusqueda = id.includes(busqueda);
+
+                card.style.display = (cumpleFiltro && cumpleBusqueda) ? 'flex' : 'none';
+            });
+        }
+
+        init();
+    </script>
 </body>
 </html>
