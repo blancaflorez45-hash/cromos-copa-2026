@@ -100,7 +100,7 @@
 
         .stickers-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(65px, 1fr));
             gap: 6px;
         }
 
@@ -113,7 +113,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-size: 11px;
+            font-size: 10px;
             font-weight: bold;
             cursor: pointer;
             box-shadow: 0 2px 4px rgba(0,0,0,0.3);
@@ -164,17 +164,14 @@
             <button onclick="marcarEstadoTodos(0)">Restablecer todo</button>
             <button onclick="copiarIntercambio()">🔄 Quiero cambiar</button>
             <button onclick="compartirWhatsApp()">📲 Compartir WhatsApp</button>
-            <button onclick="guardarCopia()">💾 Guardar copia</button>
-            
-            <button onclick="document.getElementById('fileInput').click()">📂 Cargar copia</button>
-            <input type="file" id="fileInput" accept=".json,application/json" style="display: none;" onchange="cargarFichero(event)">
-            
+            <button onclick="guardarCopia()">💾 Copiar datos (Texto)</button>
+            <button onclick="cargarCopiaTexto()">📋 Pegar copia (Texto)</button>
             <button onclick="empezarDeCero()" style="background:#ff4d4d; color:white;">🗑️ Empezar de cero</button>
         </div>
     </details>
 
     <div class="stats-bar">
-        <span>Total Cromos: <b id="stat-total">0</b></span>
+        <span>Total: <b id="stat-total">960</b></span>
         <span>Tengo: <b id="stat-tengo">0</b></span>
         <span>Faltan: <b id="stat-faltan">0</b></span>
         <span>Repes: <b id="stat-repes">0</b></span>
@@ -183,12 +180,18 @@
     <div class="stickers-grid" id="grid"></div>
 
     <script>
-        const PAISES = ["ESP", "ARG", "BRA", "FRA", "GER", "ITA"];
-        const CROMOS_POR_PAIS = 10;
+        const PAISES = [
+            "USA", "MEX", "CAN", "ARG", "BRA", "COL", "URU", "CHI", "PER", "PAR", "ECU", "VEN",
+            "ESP", "FRA", "GER", "ENG", "ITA", "NED", "POR", "BEL", "CRO", "DEN", "SUI", "SRB",
+            "POL", "UKR", "SWE", "TUR", "AUT", "HUN", "MAR", "SEN", "EGY", "NGA", "CMR", "GHA",
+            "JPN", "KOR", "AUS", "IRN", "KSA", "QAT", "UZB", "NZL", "CRC", "PAN", "JAM", "HON"
+        ];
+        const CROMOS_POR_PAIS = 20; // Total 960
         let coleccion = JSON.parse(localStorage.getItem('cromos_copa_2026')) || {};
 
         function init() {
-            if (Object.keys(coleccion).length === 0) {
+            if (Object.keys(coleccion).length < 960) {
+                coleccion = {};
                 PAISES.forEach(p => {
                     for (let i = 1; i <= CROMOS_POR_PAIS; i++) {
                         coleccion[`${p}-${i}`] = 1;
@@ -219,7 +222,7 @@
                 else if (estado === 2) { card.classList.add('owned'); textoEstado = 'TENGO'; }
                 else if (estado > 2) { card.classList.add('dup'); textoEstado = `REPE x${estado - 1}`; }
 
-                card.innerHTML = `<div>${id}</div><div style="font-size:9px">${textoEstado}</div>`;
+                card.innerHTML = `<div>${id}</div><div style="font-size:8px; opacity:0.8;">${textoEstado}</div>`;
 
                 if (estado > 2) {
                     const ctrl = document.createElement('div');
@@ -283,41 +286,35 @@
         }
 
         function guardarCopia() {
-            let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(coleccion));
-            let downloadAnchor = document.createElement('a');
-            downloadAnchor.setAttribute("href", dataStr);
-            downloadAnchor.setAttribute("download", "copia_cromos_2026.json");
-            document.body.appendChild(downloadAnchor);
-            downloadAnchor.click();
-            downloadAnchor.remove();
+            let textoCopia = JSON.stringify(coleccion);
+            navigator.clipboard.writeText(textoCopia).then(() => {
+                alert('¡Datos copiados al portapapeles! Puedes pegarlos en un chat de WhatsApp para enviarlos.');
+            }).catch(() => {
+                prompt("Copia este texto manualmente:", textoCopia);
+            });
         }
 
-        function cargarFichero(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
+        function cargarCopiaTexto() {
+            let texto = prompt("Pega aquí el texto de copia que recibiste por WhatsApp:");
+            if (texto) {
                 try {
-                    const contenido = JSON.parse(e.target.result);
+                    let contenido = JSON.parse(texto.trim());
                     if (typeof contenido === 'object' && contenido !== null) {
                         coleccion = contenido;
                         guardar();
                         render();
                         alert('¡Colección cargada con éxito!');
                     } else {
-                        throw new Error('Formato inválido');
+                        throw new Error();
                     }
                 } catch (err) {
-                    alert('Error: El archivo no contiene un formato de copia válido.');
+                    alert('El texto pegado no es válido. Asegúrate de copiar todo el mensaje.');
                 }
-                event.target.value = ''; // Permite recargar el mismo archivo si se desea
-            };
-            reader.readAsText(file);
+            }
         }
 
         function empezarDeCero() {
-            if (confirm('¿Seguro que quieres borrar toda tu colección?')) {
+            if (confirm('¿Seguro que quieres reiniciar todos los cromos a faltantes?')) {
                 localStorage.removeItem('cromos_copa_2026');
                 coleccion = {};
                 init();
