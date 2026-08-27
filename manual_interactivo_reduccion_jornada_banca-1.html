@@ -1,17 +1,178 @@
-# 1. Inicializa el repositorio local
-git init
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual de Reducción de Jornada - BBVA</title>
+    <style>
+        :root {
+            --bbva-navy: #004481;
+            --bbva-blue: #1464A5;
+            --bbva-aqua: #28A7B5;
+            --bbva-white: #FFFFFF;
+            --bbva-gray-light: #F4F4F4;
+            --bbva-gray-text: #333333;
+        }
 
-# 2. Añade el archivo al área de preparación
-git add index.html
+        body {
+            font-family: 'BentonSans', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bbva-gray-light);
+            color: var(--bbva-gray-text);
+            line-height: 1.6;
+        }
 
-# 3. Guarda el primer commit
-git commit -m "Primer commit: index.html del manual"
+        header {
+            background-color: var(--bbva-navy);
+            color: var(--bbva-white);
+            padding: 2rem 1rem;
+            text-align: center;
+            border-bottom: 4px solid var(--bbva-aqua);
+        }
 
-# 4. Cambia la rama principal a main
-git branch -M main
+        header h1 {
+            margin: 0;
+            font-size: 2.2rem;
+            font-weight: 600;
+        }
 
-# 5. Enlaza con tu repositorio remoto de GitHub (reemplaza la URL)
-git remote add origin https://github.com/tu-usuario/tu-repositorio.git
+        header p {
+            margin-top: 0.5rem;
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
 
-# 6. Sube los archivos
-git push -u origin main
+        .container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+        }
+
+        .card {
+            background: var(--bbva-white);
+            border-radius: 8px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        h2 {
+            color: var(--bbva-navy);
+            margin-top: 0;
+            border-bottom: 2px solid var(--bbva-gray-light);
+            padding-bottom: 0.5rem;
+        }
+
+        ul {
+            padding-left: 1.2rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        .grid-docs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .doc-item {
+            background: var(--bbva-gray-light);
+            padding: 1.2rem;
+            border-left: 4px solid var(--bbva-blue);
+            border-radius: 4px;
+        }
+
+        .doc-item h3 {
+            margin-top: 0;
+            color: var(--bbva-blue);
+        }
+
+        .btn {
+            display: inline-block;
+            background-color: var(--bbva-blue);
+            color: var(--bbva-white);
+            padding: 0.6rem 1.2rem;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-top: 0.8rem;
+            transition: background-color 0.2s;
+        }
+
+        .btn:hover {
+            background-color: var(--bbva-navy);
+        }
+
+        footer {
+            text-align: center;
+            padding: 1.5rem;
+            background-color: var(--bbva-navy);
+            color: var(--bbva-white);
+            font-size: 0.9rem;
+            margin-top: 3rem;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Manual de Reducción de Jornada</h1>
+        <p>Gestión del tiempo y conciliación familiar — BBVA</p>
+    </header>
+
+    <div class="container">
+        
+        <section class="card">
+            <h2>Bienvenida e Información General</h2>
+            <p>Este manual reúne toda la normativa, modalidades y procedimientos para la solicitud y gestión de la reducción de jornada en BBVA, garantizando el derecho a la conciliación de la vida personal, familiar y laboral.</p>
+        </section>
+
+        <section class="card">
+            <h2>Modalidades Principales</h2>
+            <div class="grid-docs">
+                <div class="doc-item">
+                    <h3>Cuidado de Menores</h3>
+                    <p>Reducción de jornada por guarda legal de menores de 12 años, con concreción horaria dentro de la jornada habitual.</p>
+                </div>
+                <div class="doc-item">
+                    <h3>Cuidado de Familiares</h3>
+                    <p>Atención a familiares hasta el 2º grado de consanguinidad o afinidad que no puedan valerse por sí mismos.</p>
+                </div>
+                <div class="doc-item">
+                    <h3>Enfermedad Grave</h3>
+                    <p>Reducción para el cuidado directo de menores a cargo afectados por cáncer u otra enfermedad grave.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>Pasos para la Solicitud</h2>
+            <ol>
+                <li><strong>Revisión de requisitos:</strong> Consulta los criterios de concesión en la normativa interna.</li>
+                <li><strong>Preaviso:</strong> Notifica a Tu Gestor / Recursos Humanos con al menos 15 días de antelación.</li>
+                <li><strong>Tramitación:</strong> Introduce la solicitud formal a través de la herramienta interna de autoservicio (Portal del Empleado).</li>
+                <li><strong>Aprobación:</strong> Confirmación del horario, porcentaje de reducción e impacto en la nómina.</li>
+            </ol>
+        </section>
+
+        <section class="card">
+            <h2>Documentación y Enlaces Útiles</h2>
+            <p>Accede a las guías detalladas y formularios oficiales desde la red corporativa:</p>
+            <ul>
+                <li><a href="#" class="btn">Guía Completa en PDF</a></li>
+                <li><a href="#" class="btn">Acceso al Portal del Empleado</a></li>
+            </ul>
+        </section>
+
+    </div>
+
+    <footer>
+        <p>&copy; 2026 BBVA — Dirección de Personas y Talento. Uso exclusivo interno.</p>
+    </footer>
+
+</body>
+</html>
