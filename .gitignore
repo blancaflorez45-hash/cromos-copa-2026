@@ -1,0 +1,12 @@
+# Archivos temporales y de caché de Python
+__pycache__/
+*.py[cod]
+*$*.py
+
+# Hoja de cálculo final autogenerada (se prefiere generar localmente)
+Solicitud_Reduccion_Jornada.ods
+Solicitud_Reduccion_Jornada.xlsx
+
+# Entornos virtuales
+venv/
+ENV/
